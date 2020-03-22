@@ -5,21 +5,23 @@ import org.opencv.core.*;
 //Detectores
 import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.objdetect.Objdetect;
+import java.util.*;
 int x,x1,x2;
 Capture cam;
 CVImage img;
 PImage bird,pipeUp,pipeDown;
-//Cascadas para detección
+
 CascadeClassifier face,leye,reye;
-//Nombres de modelos
 String faceFile, leyeFile,reyeFile;
 int pipeHeight = 1500;
+
+List<Pipe> pipeList;
 void setup() {
   size(640, 480);
   //Cámara
   cam = new Capture(this, width , height);
   cam.start(); 
-  bird = loadImage("flappy-bird1.jpg");
+  bird = loadImage("flappy-bird1.png");
   pipeUp = loadImage("pipeUp.png");
   pipeDown = loadImage("pipeDown.png");
   //OpenCV
@@ -33,8 +35,9 @@ void setup() {
   leyeFile = "haarcascade_mcs_lefteye.xml";
   reyeFile = "haarcascade_mcs_righteye.xml";
   face = new CascadeClassifier(dataPath(faceFile));
-  leye = new CascadeClassifier(dataPath(leyeFile));
-  reye = new CascadeClassifier(dataPath(reyeFile));
+  pipeList = new ArrayList();
+  Pipe pipe= new Pipe(2);
+  pipeList.add(pipe);
 }
 
 void draw() {  
@@ -52,59 +55,31 @@ void draw() {
     
     //Imagen de entrada
     image(img,0,0);
-    printPipes();
+    if(!pipeList.isEmpty()){
+
+      int tam = pipeList.size()-1;
+      if(pipeList.get(tam).getPosition()< 3*(width/4)){
+        generatePipes();
+      }
+    }
     //Detección y pintado de contenedores
     FaceDetect(gris);
-    
+    for(Pipe pip : pipeList){
+      pip.drawPipe();
+      pip.update();
+    }
     gris.release();
   }
 }
-void printPipes(){
-  
-  alto();
-  
-  medio();
-
-  bajo();
+void generatePipes(){
+  Pipe pipe;
+  int numero = (int)(Math.random()*3+1);
+  pipe = new Pipe(numero);
+  pipeList.add(pipe);
   
   
-  x+=5;
-  x1+=5;
-  x2+=5;
 }
 
-void alto(){
-  pushMatrix();
-  scale(0.3,0.2);
-  image(pipeUp,width*2-x,-pipeHeight+500);
-  popMatrix();
-  pushMatrix();
-  scale(0.3,0.2);
-  image(pipeDown,width*2-x,pipeHeight-500);
-  popMatrix();
-}
-
-void medio(){
-  pushMatrix();
-  scale(0.3,0.2);
-  image(pipeUp,width*2-x1,-pipeHeight+1000);
-  popMatrix();
-  pushMatrix();
-  scale(0.3,0.2);
-  image(pipeDown,width*2-x1,pipeHeight);
-  popMatrix();
-}
-
-void bajo(){
-  pushMatrix();
-  scale(0.3,0.2);
-  image(pipeUp,width*2-x2,0);
-  popMatrix();
-  pushMatrix();
-  scale(0.3,0.2);
-  image(pipeDown,width*2-x2,pipeHeight+500);
-  popMatrix();
-}
 void FaceDetect(Mat grey)
 {
   
