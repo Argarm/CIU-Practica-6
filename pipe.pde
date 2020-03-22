@@ -1,12 +1,13 @@
 class Pipe{
   int pipeHeight = 1500;
   PImage pipeUp,pipeDown;
-  int position,yUp,yDown;
+  int choose,position,yUp,yDown;
   
   Pipe(int choose){
-    pipeUp = loadImage("pipeUp.png");
-    pipeDown = loadImage("pipeDown.png");
+    pipeUp = loadImage("./imgs/pipeUp.png");
+    pipeDown = loadImage("./imgs/pipeDown.png");
     position = width*2;
+    this.choose = choose;
     if(choose==1){
       yUp=-pipeHeight+500;
       yDown=pipeHeight-500;
@@ -22,6 +23,7 @@ class Pipe{
   }
   
   void drawPipe(){
+    rectMode(CENTER);
     pushMatrix();
     scale(0.3,0.2);
     image(pipeUp,position,yUp);
@@ -35,7 +37,20 @@ class Pipe{
   int getPosition(){
     return position;
   }
+  
+  PVector getColision(){
+    if(choose==1)return new PVector(height/3-60,height/3+40);
+    if(choose==2)return new PVector(height/2-40,height/2+80);
+    if(choose==3)return new PVector(2*height/3-35,2*height/3+80);
+    return new PVector();
+    
+  }
+  
+  int getYDown(){
+    return yDown;
+  }
+  
   void update(){
-    position-=10;
+    position-=12;
   }
 }

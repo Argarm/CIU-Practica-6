@@ -6,44 +6,51 @@ import org.opencv.core.*;
 import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.objdetect.Objdetect;
 import java.util.*;
-int x,x1,x2;
+enum State {
+  GAME,
+  PAUSE,
+  INIT,
+  END;
+}
 Capture cam;
 CVImage img;
-PImage bird,pipeUp,pipeDown;
-
-CascadeClassifier face,leye,reye;
-String faceFile, leyeFile,reyeFile;
+PImage bird;
+boolean justOnce;
+State state;
+int anchoMayor,altoMayor;
+CascadeClassifier face;
+String faceFile;
 int pipeHeight = 1500;
-
+int contador;
 List<Pipe> pipeList;
+PVector posBird;
 void setup() {
   size(640, 480);
   //Cámara
+  contador=0;
+  state = State.INIT;
   cam = new Capture(this, width , height);
   cam.start(); 
-  bird = loadImage("flappy-bird1.png");
-  pipeUp = loadImage("pipeUp.png");
-  pipeDown = loadImage("pipeDown.png");
+  bird = loadImage("./imgs/flappy-bird.png");
   //OpenCV
   //Carga biblioteca core de OpenCV
   System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-  println(Core.VERSION);
   img = new CVImage(cam.width, cam.height);
-  
+  posBird = new PVector();
   //Detectores
   faceFile = "haarcascade_frontalface_default.xml";
-  leyeFile = "haarcascade_mcs_lefteye.xml";
-  reyeFile = "haarcascade_mcs_righteye.xml";
   face = new CascadeClassifier(dataPath(faceFile));
   pipeList = new ArrayList();
   Pipe pipe= new Pipe(2);
   pipeList.add(pipe);
+  
 }
 
 void draw() {  
   if (cam.available()) {
     background(0);
     cam.read();
+    textSize(20);
     
     //Obtiene la imagen de la cámara
     img.copy(cam, 0, 0, cam.width, cam.height, 
@@ -55,20 +62,44 @@ void draw() {
     
     //Imagen de entrada
     image(img,0,0);
-    if(!pipeList.isEmpty()){
-
-      int tam = pipeList.size()-1;
-      if(pipeList.get(tam).getPosition()< 3*(width/4)){
-        generatePipes();
+    text(contador,width/2,height/8);
+    if(state == State.GAME){
+      if(!pipeList.isEmpty()){
+        if(pipeList.size()==5)pipeList.remove(0);
+        int tam = pipeList.size()-1;
+        if(pipeList.get(tam).getPosition()< 3*(width/4)){
+          generatePipes();
+        }
       }
+      //Detección y pintado de contenedores
+      FaceDetect(gris);
+      for(Pipe pip : pipeList){
+        if(pip.getPosition()+5> posBird.x && pip.getPosition()-5<posBird.x){
+          if(pip.getColision().x<posBird.y && pip.getColision().y>posBird.y){
+            contador++;  
+          }else{
+            state = State.END;
+          }
+        }
+        
+        pip.drawPipe();
+        pip.update();
+      }
+      gris.release();
     }
-    //Detección y pintado de contenedores
-    FaceDetect(gris);
-    for(Pipe pip : pipeList){
-      pip.drawPipe();
-      pip.update();
-    }
-    gris.release();
+  }
+  if(state == State.PAUSE){
+    textSize(30);
+    text("Pulsa ESPACIO para volver a jugar",100,height/2);
+  }
+  if(state == State.END){
+    textSize(30);
+    text("Pulsa ESPACIO para volver a la\n            pantalla inicial",100,height/2);
+    inicializa();
+  }
+  if(state == State.INIT){
+    textSize(30);
+    text("Pulsa ESPACIO para empezar a jugar",70,height/2);
   }
 }
 void generatePipes(){
@@ -76,8 +107,6 @@ void generatePipes(){
   int numero = (int)(Math.random()*3+1);
   pipe = new Pipe(numero);
   pipeList.add(pipe);
-  
-  
 }
 
 void FaceDetect(Mat grey)
@@ -95,10 +124,41 @@ void FaceDetect(Mat grey)
   stroke(255,0,0);
   strokeWeight(4);
   for (Rect r : facesArr) { 
-    bird.resize(0,50);
-    image(bird,r.x+r.width/4,r.y);
+    bird.resize(0,60);
+    
+    image(bird,r.x+r.width/3,r.y);
+    posBird.x = r.x;
+    posBird.y = r.y;
    }
   
  
   faces.release();
+}
+void inicializa(){
+  pipeList = new ArrayList();
+  Pipe pipe = new Pipe(2);
+  pipeList.add(pipe);
+  contador=0;
+}
+
+void keyPressed() {
+  if(key == ' ' ){
+    justOnce = true;
+      if(state == State.PAUSE && justOnce){
+        state = State.GAME;
+        justOnce = false;
+      }
+      if(state == State.INIT && justOnce){
+        state = State.GAME;
+        justOnce = false;
+      }
+      if(state == State.END && justOnce){
+        state = State.INIT;
+        justOnce = false;
+      }
+      if(state == State.GAME && justOnce){
+        state = State.PAUSE;
+        justOnce = false;
+      }
+  }
 }
