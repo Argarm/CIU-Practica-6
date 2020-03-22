@@ -14,4 +14,4 @@ Principalmente hay un archivo raiz llamado [*flappy_bird.pde*](flappy_bird.pde) 
 processing: https://processing.org/reference/
 
 ## GIF
-![](./funcionamiento.gif)
+![](./funcinamiento.gif)
